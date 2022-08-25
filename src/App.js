@@ -1,28 +1,32 @@
 import './App.css';
-import { Button, Navbar, Container, Nav, Row, Col } from 'react-bootstrap';
-import bg from './img/bg.png';
-import { useState } from "react";
-import data from "./data.js";
+import { Navbar, Container, Nav, Row, Col } from 'react-bootstrap';
+import { useState, createContext } from "react";
 import { Routes, Route, Link, useNavigate, Outlet } from "react-router-dom";
-import Detail from "./pages/Detail.js";
-import About from "./pages/About.js";
-import Event from "./pages/Event.js";
-import Card from "./components/Card.js";
+import bg from './img/bg.png';
+import data from "./data.js";
+import Detail from "./pages/Detail";
+import About from "./pages/About";
+import Event from "./pages/Event";
+import Card from "./components/Card";
+import axios from "axios";
+import Cart from "./pages/Cart";
+
+export let Context1 = createContext()
 
 function App() {
-
-  let [ shoes ] = useState(data);
+  let [ shoes, setShoes ] = useState(data);
   let navigate = useNavigate();
+  let [ stock, setStock ] = useState([10, 11, 12]);
 
   return (
     <div className="App">
-
       <Navbar bg="light" variant="light">
         <Container>
-          <Navbar.Brand href="#home">발신발</Navbar.Brand>
+          <Navbar.Brand href="#home">슈킹 ShoeKing</Navbar.Brand>
           <Nav className="me-auto">
-            <Nav.Link onClick={()=>{ navigate('/')}}>홈</Nav.Link>
-            <Nav.Link onClick={()=>{ navigate('/detail') }}>상세페이지</Nav.Link>
+            <Nav.Link onClick={()=>{ navigate('/') }}>홈</Nav.Link>
+            <Nav.Link onClick={()=>{ navigate('/cart') }}>장바구니</Nav.Link>
+            <Nav.Link onClick={()=>{ navigate('/detail/0') }}>상세페이지</Nav.Link>
           </Nav>
         </Container>
       </Navbar>
@@ -30,7 +34,7 @@ function App() {
       <Routes>
         <Route path="/" element={
           <>
-            <div className='main-bg'></div>
+            <div className='main-bg' style={{ backgroundImage: 'url('+ bg +')'}}></div>
             <div className='container'>
               <div className='row'>
               {
@@ -42,12 +46,32 @@ function App() {
               }
               </div>
             </div>
+            <button onClick={() => {
+              // 로딩중UI 띄우기
+              axios.get('https://codingapple1.github.io/shop/data2.json')
+              .then((result) => { 
+                let copy = [ ...shoes, ...result.data ]
+                setShoes(copy)
+                // 로딩중UI 숨기기
+              })
+              .catch((error) => {
+                // 로딩중UI 숨기기
+                console.log('에러났다')
+              })
+            }}>버튼</button>
           </>
         } />
         
-        <Route path="/detail/:id" element={ <Detail shoes={shoes} /> } />
+        <Route path="/detail/:id" element= { 
+          <Context1.Provider value={ {stock, shoes} }>
+            <Detail shoes={ shoes } />
+          </Context1.Provider>
+          } 
+        />
+        <Route path="/cart" element={ <Cart /> } />
+
         <Route path="/about" element={ <About /> }>
-          <Route Route path="member" element={ <div>멤버들</div> }></Route>
+          <Route path="member" element={ <div>멤버들</div> }></Route>
           <Route path="location" element={ <div>위치정보임</div> }></Route>
         </Route>
         <Route path="/event" element={ <Event /> }>
